@@ -29,7 +29,7 @@ export default function Home() {
             Razorpay Relay
           </h1>
           <p className="text-muted-foreground mt-1 tracking-wide font-light">
-            AI Revenue Recovery Command Center
+            AI Revenue Recovery Command Center — B2C Payments & B2B Receivables
           </p>
         </div>
         

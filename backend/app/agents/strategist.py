@@ -34,28 +34,36 @@ async def recovery_strategist(state: RecoveryState) -> dict:
     customer_name = customer.get("name", "Customer") if customer else "Customer"
     customer_email = customer.get("email", "") if customer else ""
     replan_count = state.get("replan_count", 0)
+    segment = state.get("segment") or ("B2B" if leakage_category == "OVERDUE_RECEIVABLE" else "B2C")
+    invoice = state.get("invoice") or {}
+    followup_plan = (investigation or {}).get("followup_plan", {})
 
     prompt = f"""You are a Recovery Strategist AI agent. Your goal is to select the BEST recovery action that maximizes expected recovered revenue while minimizing customer annoyance.
 
 CONTEXT:
+- Segment: {segment}
 - Leakage Category: {leakage_category}
 - Amount at Risk: ₹{amount:,.0f}
 - Customer Name: {customer_name}
 - Customer Email: {customer_email}
+- Invoice (B2B): {invoice}
+- B2B Follow-up Plan (if any): {followup_plan}
 - Replan Attempt: {replan_count} (previous strategies may have failed)
 
 INVESTIGATION FINDINGS:
 {investigation}
 
 AVAILABLE ACTIONS:
-1. SMART_RETRY — Automatically retry the payment (best for temporary failures)
-2. WAIT — Wait for customer to return (low effort, low probability)
-3. CREATE_PAYMENT_LINK — Generate a hosted payment link (reduces checkout friction)
+1. SMART_RETRY — Automatically retry the payment (best for temporary B2C failures)
+2. WAIT — Wait / schedule delayed follow-up (use cooldown from follow-up plan)
+3. CREATE_PAYMENT_LINK — Generate a hosted payment link (reduces friction)
 4. SEND_EMAIL — Send a recovery email reminder
 5. SEND_WHATSAPP — Send WhatsApp message (if available)
-6. OFFER_DISCOUNT — Offer a small discount to incentivize (max 10%)
-7. ESCALATE_TO_HUMAN — Hand off to human agent
-8. STOP — Do not attempt recovery
+6. OFFER_DISCOUNT — Offer a small discount to incentivize (max 10%, B2C mainly)
+7. SEND_INVOICE_REMINDER — B2B: send personalized overdue invoice reminder with payment link
+8. SCHEDULE_FOLLOWUP — B2B: explicitly schedule a delayed follow-up (pairs with WAIT)
+9. ESCALATE_TO_HUMAN — Hand off to human agent / collections
+10. STOP — Do not attempt further recovery
 
 COMMUNICATION CHANNELS: EMAIL, WHATSAPP, SMS, NONE
 
@@ -63,10 +71,14 @@ RULES:
 - You MUST evaluate at least 3 alternatives and provide recovery probabilities for each
 - For FAILED_PAYMENT with temporary reasons → prefer SMART_RETRY or CREATE_PAYMENT_LINK
 - For ABANDONED_CART → prefer CREATE_PAYMENT_LINK + EMAIL
+- For OVERDUE_RECEIVABLE (B2B):
+  * Strongly respect the follow-up plan recommended_action (REMIND→SEND_INVOICE_REMINDER, WAIT→WAIT/SCHEDULE_FOLLOWUP, ESCALATE→ESCALATE_TO_HUMAN, STOP→STOP, CREATE_PAYMENT_LINK→CREATE_PAYMENT_LINK)
+  * Prefer professional collections tone; no consumer discounts unless explicitly justified
+  * Include invoice_id and company name in email subject/body
 - For high-value customers → prefer gentler approaches
 - For replan attempts > 0 → try a DIFFERENT strategy than before
 - If replan_count >= 2 → consider ESCALATE_TO_HUMAN or STOP
-- CREATE_PAYMENT_LINK almost always requires a communication channel to deliver it (EMAIL or WHATSAPP)
+- CREATE_PAYMENT_LINK / SEND_INVOICE_REMINDER almost always require a communication channel (EMAIL or WHATSAPP)
 - Generate a professional, personalized email subject and body if EMAIL is chosen
 - The email body should mention the customer name, amount, and include a placeholder {{payment_link}} for the actual link
 

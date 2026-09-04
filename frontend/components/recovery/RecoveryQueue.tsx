@@ -57,8 +57,18 @@ export function RecoveryQueue({ onSelectCase }: { onSelectCase: (id: string) => 
                     <div className="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">
                       {c.event_id}
                     </div>
-                    <div className="text-xs text-slate-500">
-                      {c.category?.replace(/_/g, ' ') || 'Unknown'}
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span
+                        className={
+                          c.segment === "B2B" || c.category === "OVERDUE_RECEIVABLE"
+                            ? "text-[#F59E0B]"
+                            : "text-[#2B84EA]"
+                        }
+                      >
+                        {c.segment || (c.category === "OVERDUE_RECEIVABLE" ? "B2B" : "B2C")}
+                      </span>
+                      <span>·</span>
+                      <span>{c.category?.replace(/_/g, " ") || "Unknown"}</span>
                     </div>
                   </div>
                 </div>

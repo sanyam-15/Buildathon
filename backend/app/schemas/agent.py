@@ -49,6 +49,35 @@ class SpecialistOutput(BaseModel):
     recommended_approach: str = Field(description="Recommended high-level approach")
 
 
+# B2B invoice analyzer output
+class InvoiceAnalyzerOutput(BaseModel):
+    aging_bucket: str = Field(description="Aging bucket: CURRENT, 1_30, 31_60, 61_90, 90_PLUS")
+    invoice_tier: str = Field(description="Invoice value tier: HIGH, MEDIUM, LOW")
+    urgency: str = Field(description="Urgency: CRITICAL, HIGH, MEDIUM, LOW")
+    findings: str = Field(description="Key invoice analysis findings")
+    recommended_tone: str = Field(description="Recommended collections tone: soft, firm, formal, escalate")
+
+
+# B2B history analyst output
+class HistoryAnalystOutput(BaseModel):
+    payer_reliability: str = Field(description="Payer reliability: EXCELLENT, GOOD, FAIR, POOR")
+    historical_on_time_rate: float = Field(ge=0, le=1, description="Historical on-time payment rate")
+    previous_followups: int = Field(description="Number of previous follow-up attempts")
+    response_pattern: str = Field(description="Observed response pattern")
+    risk_flags: List[str] = Field(description="Risk flags identified")
+    findings: str = Field(description="Key payment history findings")
+
+
+# B2B follow-up planner output
+class FollowupPlannerOutput(BaseModel):
+    recommended_action: str = Field(description="One of: REMIND, WAIT, ESCALATE, STOP, CREATE_PAYMENT_LINK")
+    cooldown_hours: int = Field(description="Suggested hours to wait before next contact if WAIT")
+    escalation_reason: Optional[str] = Field(default=None, description="Reason if escalating")
+    stop_reason: Optional[str] = Field(default=None, description="Reason if stopping")
+    confidence: float = Field(ge=0, le=1, description="Confidence in follow-up plan")
+    reasoning: str = Field(description="Why this follow-up decision was chosen")
+
+
 # Strategy alternative
 class StrategyAlternative(BaseModel):
     action: str = Field(description="Action name")
@@ -63,6 +92,8 @@ class RecoveryAction(str, Enum):
     SEND_EMAIL = "SEND_EMAIL"
     SEND_WHATSAPP = "SEND_WHATSAPP"
     OFFER_DISCOUNT = "OFFER_DISCOUNT"
+    SEND_INVOICE_REMINDER = "SEND_INVOICE_REMINDER"
+    SCHEDULE_FOLLOWUP = "SCHEDULE_FOLLOWUP"
     ESCALATE_TO_HUMAN = "ESCALATE_TO_HUMAN"
     STOP = "STOP"
 

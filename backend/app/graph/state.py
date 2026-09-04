@@ -28,6 +28,8 @@ class RecoveryState(TypedDict):
     transaction: Optional[dict]
     cart: Optional[dict]
     subscription: Optional[dict]
+    invoice: Optional[dict]
+    segment: Optional[str]  # B2C | B2B
 
     # Revenue Sentinel output
     revenue_risk: Optional[dict]

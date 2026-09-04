@@ -2,6 +2,7 @@
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import text
 from app.config import settings
 
 # Convert sqlite URL to async variant
@@ -18,9 +19,14 @@ class Base(DeclarativeBase):
 
 
 async def init_db():
-    """Create all tables."""
+    """Create all tables and apply lightweight column migrations."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # SQLite create_all does not add new columns to existing tables
+        try:
+            await conn.execute(text("ALTER TABLE recovery_cases ADD COLUMN segment VARCHAR"))
+        except Exception:
+            pass  # column already exists
 
 
 async def get_session() -> AsyncSession:

@@ -22,11 +22,11 @@ export async function triggerRecovery(payload: any) {
   return res.json();
 }
 
-export async function triggerBatchRecovery(count: number = 10) {
+export async function triggerBatchRecovery(count: number = 10, segment?: string) {
   const res = await fetch(`${API_URL}/recovery/batch`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ count }),
+    body: JSON.stringify({ count, segment: segment || undefined }),
   });
   if (!res.ok) throw new Error('Failed to trigger batch recovery');
   return res.json();

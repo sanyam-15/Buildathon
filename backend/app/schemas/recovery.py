@@ -10,6 +10,7 @@ class RecoveryCaseResponse(BaseModel):
     event_id: str
     customer_id: Optional[str] = None
     category: Optional[str] = None
+    segment: Optional[str] = None
     classification_confidence: Optional[float] = None
     amount_at_risk: float = 0.0
     recovery_probability: Optional[float] = None
@@ -28,7 +29,6 @@ class RecoveryCaseResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
 
 class DashboardStats(BaseModel):
     total_cases: int = 0

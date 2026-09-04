@@ -74,15 +74,63 @@ export function CaseDetails({ caseId }: { caseId: string | null }) {
         </div>
 
         <div>
+          <div className="text-xs text-slate-500 uppercase tracking-widest mb-2">Segment</div>
+          <Badge
+            variant="outline"
+            className={
+              caseData.segment === "B2B" || caseData.category === "OVERDUE_RECEIVABLE"
+                ? "bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20"
+                : "bg-[#2B84EA]/10 text-[#2B84EA] border-[#2B84EA]/20"
+            }
+          >
+            {caseData.segment || (caseData.category === "OVERDUE_RECEIVABLE" ? "B2B" : "B2C")}
+          </Badge>
+        </div>
+
+        <div>
           <div className="text-xs text-slate-500 uppercase tracking-widest mb-2">Category</div>
           {caseData.category ? (
-            <Badge variant="outline" className="bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20">
-              {caseData.category.replace(/_/g, ' ')}
+            <Badge
+              variant="outline"
+              className={
+                caseData.category === "OVERDUE_RECEIVABLE"
+                  ? "bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20"
+                  : "bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20"
+              }
+            >
+              {caseData.category.replace(/_/g, " ")}
             </Badge>
           ) : (
             <span className="text-sm text-slate-500">Analyzing...</span>
           )}
         </div>
+
+        {caseData.investigation?.invoice && (
+          <div>
+            <div className="text-xs text-slate-500 uppercase tracking-widest mb-2">Invoice</div>
+            <div className="text-sm text-slate-300 font-mono">
+              {caseData.investigation.invoice.invoice_id}
+            </div>
+            <div className="text-xs text-slate-500 mt-1">
+              {caseData.investigation.invoice.company_name}
+              {caseData.investigation.days_overdue != null && (
+                <> · {caseData.investigation.days_overdue}d overdue</>
+              )}
+            </div>
+          </div>
+        )}
+
+        {caseData.investigation?.followup_plan && (
+          <div>
+            <div className="text-xs text-slate-500 uppercase tracking-widest mb-2">Follow-up Plan</div>
+            <div className="text-sm text-[#F59E0B]">
+              {caseData.investigation.followup_plan.recommended_action}
+            </div>
+            <div className="text-xs text-slate-500 mt-1 leading-relaxed">
+              {caseData.investigation.followup_plan.reasoning}
+            </div>
+          </div>
+        )}
 
         <div>
           <div className="text-xs text-slate-500 uppercase tracking-widest mb-1">Amount at Risk</div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Terminal, Shield, Zap, Search, Brain, Eye, CreditCard, MessageCircle } from "lucide-react";
+import { Terminal, Shield, Zap, Search, Brain, Eye, CreditCard, Building2, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function LiveConsole({ events = [] }: { events: any[] }) {
@@ -22,6 +22,12 @@ export function LiveConsole({ events = [] }: { events: any[] }) {
     if (type.includes('payment') || agent?.includes('payment')) return <CreditCard className="w-3.5 h-3.5 text-[#22C55E]" />;
     if (agent?.includes('strategist')) return <Brain className="w-3.5 h-3.5 text-[#8B5CF6]" />;
     if (agent === 'monitor_agent') return <Eye className="w-3.5 h-3.5 text-[#2B84EA]" />;
+    if (agent?.startsWith('b2b_') || agent === 'overdue_receivable_specialist') {
+      return <Building2 className="w-3.5 h-3.5 text-[#F59E0B]" />;
+    }
+    if (type.includes('followup') || type.includes('invoice')) {
+      return <FileText className="w-3.5 h-3.5 text-[#F59E0B]" />;
+    }
     if (agent?.includes('classifier') || agent?.includes('specialist')) return <Search className="w-3.5 h-3.5 text-[#F59E0B]" />;
     return <Terminal className="w-3.5 h-3.5 text-[#94A3B8]" />;
   };
@@ -29,7 +35,8 @@ export function LiveConsole({ events = [] }: { events: any[] }) {
   const getColorForType = (type: string) => {
     if (type === 'policy_blocked' || type === 'case_failed') return 'text-[#EF4444]';
     if (type === 'policy_approved' || type === 'payment_verified' || type === 'revenue_recovered') return 'text-[#22C55E]';
-    if (type === 'decision_made') return 'text-[#8B5CF6]';
+    if (type === 'decision_made' || type === 'followup_planned') return 'text-[#8B5CF6]';
+    if (type === 'followup_scheduled') return 'text-[#F59E0B]';
     if (type === 'tool_started' || type === 'tool_completed') return 'text-[#2B84EA]';
     if (type === 'agent_started') return 'text-[#2B84EA]';
     return 'text-[#94A3B8]';
@@ -44,7 +51,7 @@ export function LiveConsole({ events = [] }: { events: any[] }) {
     if (filter === 'ALL') return true;
     if (filter === 'AGENTS') return ev.event_type === 'agent_started' || ev.event_type === 'agent_completed';
     if (filter === 'TOOLS') return ev.event_type === 'tool_started' || ev.event_type === 'tool_completed' || ev.event_type === 'execution_started';
-    if (filter === 'DECISIONS') return ev.event_type === 'decision_made' || ev.event_type === 'policy_approved' || ev.event_type === 'policy_blocked';
+    if (filter === 'DECISIONS') return ev.event_type === 'decision_made' || ev.event_type === 'policy_approved' || ev.event_type === 'policy_blocked' || ev.event_type === 'followup_planned' || ev.event_type === 'followup_scheduled';
     return true;
   });
 

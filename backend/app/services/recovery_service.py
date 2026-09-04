@@ -21,10 +21,12 @@ async def start_recovery(event_input: RecoveryEventInput) -> dict:
     """Start a new recovery workflow — creates case, runs LangGraph graph."""
     case_id = f"case_{uuid.uuid4().hex[:8]}"
     event_id = f"evt_{uuid.uuid4().hex[:8]}"
+    segment = event_input.segment.value if hasattr(event_input.segment, "value") else (event_input.segment or "B2C")
 
     # Build raw event (what the AI sees)
     raw_event = {
         "event_id": event_id,
+        "segment": segment,
         "customer": event_input.customer.model_dump(),
         "amount": event_input.amount,
         "currency": event_input.currency,
@@ -36,6 +38,8 @@ async def start_recovery(event_input: RecoveryEventInput) -> dict:
         raw_event["cart_items"] = [item.model_dump() for item in event_input.cart_items]
     if event_input.subscription_id:
         raw_event["subscription_id"] = event_input.subscription_id
+    if event_input.invoice:
+        raw_event["invoice"] = event_input.invoice.model_dump()
 
     # Persist event and case to DB
     async with async_session() as session:
@@ -66,6 +70,7 @@ async def start_recovery(event_input: RecoveryEventInput) -> dict:
             customer_id=customer.id,
             amount_at_risk=event_input.amount,
             status="CREATED",
+            segment=segment,
         )
         session.add(recovery_case)
         await session.commit()
@@ -74,8 +79,8 @@ async def start_recovery(event_input: RecoveryEventInput) -> dict:
     await event_bus.emit_simple(
         case_id=case_id,
         event_type="case_created",
-        message=f"Recovery case created for ₹{event_input.amount:,.0f}",
-        metadata={"event_id": event_id, "amount": event_input.amount},
+        message=f"{segment} recovery case created for ₹{event_input.amount:,.0f}",
+        metadata={"event_id": event_id, "amount": event_input.amount, "segment": segment},
     )
 
     # Build initial state
@@ -87,6 +92,8 @@ async def start_recovery(event_input: RecoveryEventInput) -> dict:
         "transaction": {"amount": event_input.amount, "currency": event_input.currency},
         "cart": {"items": [i.model_dump() for i in event_input.cart_items]} if event_input.cart_items else None,
         "subscription": {"id": event_input.subscription_id} if event_input.subscription_id else None,
+        "invoice": event_input.invoice.model_dump() if event_input.invoice else None,
+        "segment": segment,
         "revenue_risk": None,
         "leakage_category": None,
         "classification_confidence": None,
@@ -110,7 +117,7 @@ async def start_recovery(event_input: RecoveryEventInput) -> dict:
     # Run LangGraph in background task
     asyncio.create_task(_run_graph(case_id, initial_state))
 
-    return {"case_id": case_id, "event_id": event_id, "status": "PROCESSING"}
+    return {"case_id": case_id, "event_id": event_id, "status": "PROCESSING", "segment": segment}
 
 
 async def _run_graph(case_id: str, initial_state: RecoveryState):
@@ -126,6 +133,9 @@ async def _run_graph(case_id: str, initial_state: RecoveryState):
             case = result.scalar_one_or_none()
             if case:
                 case.category = final_state.get("leakage_category")
+                case.segment = final_state.get("segment") or (
+                    "B2B" if final_state.get("leakage_category") == "OVERDUE_RECEIVABLE" else "B2C"
+                )
                 case.classification_confidence = final_state.get("classification_confidence")
                 case.amount_at_risk = final_state.get("amount_at_risk", 0)
                 case.recovery_probability = final_state.get("strategy", {}).get("expected_recovery_probability") if final_state.get("strategy") else None
@@ -177,6 +187,7 @@ async def get_case(case_id: str) -> Optional[dict]:
             "event_id": case.event_id,
             "customer_id": case.customer_id,
             "category": case.category,
+            "segment": case.segment or ("B2B" if case.category == "OVERDUE_RECEIVABLE" else "B2C"),
             "classification_confidence": case.classification_confidence,
             "amount_at_risk": case.amount_at_risk,
             "recovery_probability": case.recovery_probability,
@@ -206,6 +217,7 @@ async def get_all_cases() -> List[dict]:
                 "id": c.id,
                 "event_id": c.event_id,
                 "category": c.category,
+                "segment": c.segment or ("B2B" if c.category == "OVERDUE_RECEIVABLE" else "B2C"),
                 "amount_at_risk": c.amount_at_risk,
                 "recovery_probability": c.recovery_probability,
                 "status": c.status,
@@ -280,10 +292,15 @@ async def get_dashboard_stats() -> dict:
 
 async def start_batch_recovery(batch_input: BatchRecoveryInput) -> dict:
     """Start batch recovery for multiple events."""
+    segment_filter = None
+    if batch_input.segment:
+        segment_filter = batch_input.segment.value if hasattr(batch_input.segment, "value") else batch_input.segment
+
     events = batch_input.events or _generate_batch_events(
         count=batch_input.count or 10,
         customer_email=batch_input.customer_email,
         customer_phone=batch_input.customer_phone,
+        segment_filter=segment_filter,
     )
 
     case_ids = []
@@ -303,13 +320,24 @@ def _generate_batch_events(
     count: int = 10,
     customer_email: Optional[str] = None,
     customer_phone: Optional[str] = None,
+    segment_filter: Optional[str] = None,
 ) -> List[RecoveryEventInput]:
-    """Generate a batch of diverse recovery events."""
-    from app.schemas.events import RecoveryEventInput, CustomerInput, SignalsInput, CartItem
+    """Generate a batch of diverse recovery events (B2C + B2B)."""
+    from app.schemas.events import (
+        RecoveryEventInput,
+        CustomerInput,
+        SignalsInput,
+        CartItem,
+        InvoiceInput,
+        SegmentType,
+    )
 
     names = ["Aarav Patel", "Priya Sharma", "Rohan Gupta", "Ananya Reddy", "Vikram Singh",
              "Meera Joshi", "Arjun Nair", "Divya Iyer", "Karan Malhotra", "Sneha Das",
              "Rahul Verma", "Pooja Mehta"]
+    companies = ["Acme Logistics Pvt Ltd", "NovaTech Solutions", "BrightPath Retail",
+                 "Orbit Manufacturing", "Zenith Foods", "Pulse Healthcare Systems",
+                 "Vertex Software Inc", "Summit Construction Co"]
     products = ["Premium Plan", "Annual Subscription", "Pro Features", "Enterprise License",
                 "Starter Pack", "Growth Bundle", "Designer Toolkit", "Analytics Suite"]
 
@@ -318,14 +346,53 @@ def _generate_batch_events(
         name = random.choice(names)
         email = customer_email or f"{name.lower().replace(' ', '.')}@example.com"
         phone = customer_phone or f"+9199{random.randint(10000000, 99999999)}"
+
+        if segment_filter == "B2B":
+            event_type = "overdue_receivable"
+        elif segment_filter == "B2C":
+            event_type = random.choices(
+                ["failed_payment", "abandoned_cart", "subscription_failure"],
+                weights=[0.4, 0.4, 0.2],
+            )[0]
+        else:
+            event_type = random.choices(
+                ["failed_payment", "abandoned_cart", "subscription_failure", "overdue_receivable"],
+                weights=[0.3, 0.3, 0.15, 0.25],
+            )[0]
+
+        if event_type == "overdue_receivable":
+            company = random.choice(companies)
+            amount = random.choice([24999, 49999, 74999, 99999, 149999, 249999])
+            days_overdue = random.choice([7, 15, 32, 45, 75, 95])
+            previous_followups = random.choice([0, 1, 2, 3, 4])
+            response_behavior = random.choice(
+                ["none", "acknowledged", "promised_payment", "ignored", "disputed"]
+            )
+            invoice_id = f"INV-{random.randint(1000, 9999)}"
+            events.append(RecoveryEventInput(
+                customer=CustomerInput(name=name, email=email, phone=phone),
+                amount=amount,
+                product_name="B2B Invoice Settlement",
+                segment=SegmentType.B2B,
+                signals=SignalsInput(
+                    invoice_overdue=True,
+                    days_overdue=days_overdue,
+                    previous_followups=previous_followups,
+                    response_behavior=response_behavior,
+                    payment_history_score=round(random.uniform(0.3, 0.95), 2),
+                ),
+                invoice=InvoiceInput(
+                    invoice_id=invoice_id,
+                    company_name=company,
+                    po_number=f"PO-{random.randint(10000, 99999)}",
+                    days_overdue=days_overdue,
+                    invoice_value=amount,
+                ),
+            ))
+            continue
+
         amount = random.choice([499, 999, 1999, 2499, 4999, 7499, 9999, 14999, 24999])
         product = random.choice(products)
-
-        # Mix event types
-        event_type = random.choices(
-            ["failed_payment", "abandoned_cart", "subscription_failure"],
-            weights=[0.4, 0.4, 0.2],
-        )[0]
 
         if event_type == "failed_payment":
             signals = SignalsInput(
@@ -351,6 +418,7 @@ def _generate_batch_events(
             customer=CustomerInput(name=name, email=email, phone=phone),
             amount=amount,
             product_name=product,
+            segment=SegmentType.B2C,
             signals=signals,
             cart_items=[CartItem(name=product, quantity=1, price=amount)] if event_type == "abandoned_cart" else None,
         ))

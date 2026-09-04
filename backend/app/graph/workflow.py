@@ -14,6 +14,10 @@ from app.agents.classifier import leakage_classifier
 from app.agents.failed_payment import failed_payment_specialist
 from app.agents.abandoned_cart import abandoned_cart_specialist
 from app.agents.subscription import subscription_specialist
+from app.agents.overdue_receivable import overdue_receivable_specialist
+from app.agents.b2b_invoice_analyzer import b2b_invoice_analyzer
+from app.agents.b2b_history_analyst import b2b_history_analyst
+from app.agents.b2b_followup_planner import b2b_followup_planner
 from app.agents.strategist import recovery_strategist
 from app.policies.recovery_policy import policy_engine
 from app.agents.execution import execution_agent
@@ -75,6 +79,11 @@ def build_recovery_graph() -> StateGraph:
     graph.add_node("failed_payment_specialist", failed_payment_specialist)
     graph.add_node("abandoned_cart_specialist", abandoned_cart_specialist)
     graph.add_node("subscription_specialist", subscription_specialist)
+    # B2B overdue receivable + sub-nodes
+    graph.add_node("overdue_receivable_specialist", overdue_receivable_specialist)
+    graph.add_node("b2b_invoice_analyzer", b2b_invoice_analyzer)
+    graph.add_node("b2b_history_analyst", b2b_history_analyst)
+    graph.add_node("b2b_followup_planner", b2b_followup_planner)
     graph.add_node("recovery_strategist", recovery_strategist)
     graph.add_node("policy_engine", policy_engine)
     graph.add_node("execution_agent", execution_agent)
@@ -96,14 +105,21 @@ def build_recovery_graph() -> StateGraph:
             "failed_payment_specialist": "failed_payment_specialist",
             "abandoned_cart_specialist": "abandoned_cart_specialist",
             "subscription_specialist": "subscription_specialist",
+            "overdue_receivable_specialist": "overdue_receivable_specialist",
             "escalate": "escalate",
         },
     )
 
-    # ── Specialists → Strategy ──
+    # ── B2C Specialists → Strategy ──
     graph.add_edge("failed_payment_specialist", "recovery_strategist")
     graph.add_edge("abandoned_cart_specialist", "recovery_strategist")
     graph.add_edge("subscription_specialist", "recovery_strategist")
+
+    # ── B2B Specialist → Sub-nodes → Strategy ──
+    graph.add_edge("overdue_receivable_specialist", "b2b_invoice_analyzer")
+    graph.add_edge("b2b_invoice_analyzer", "b2b_history_analyst")
+    graph.add_edge("b2b_history_analyst", "b2b_followup_planner")
+    graph.add_edge("b2b_followup_planner", "recovery_strategist")
 
     # ── Strategy → Policy ──
     graph.add_edge("recovery_strategist", "policy_engine")

@@ -13,7 +13,8 @@ class RecoveryCase(Base):
     event_id = Column(String, nullable=False)
     customer_id = Column(String, nullable=True)
 
-    category = Column(String, nullable=True)  # FAILED_PAYMENT, ABANDONED_CART, etc.
+    category = Column(String, nullable=True)  # FAILED_PAYMENT, ABANDONED_CART, OVERDUE_RECEIVABLE, etc.
+    segment = Column(String, nullable=True)  # B2C | B2B
     classification_confidence = Column(Float, nullable=True)
 
     amount_at_risk = Column(Float, default=0.0)
