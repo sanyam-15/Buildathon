@@ -64,26 +64,26 @@ graph TD
     classDef agents fill:#2B84EA,stroke:#60A5FA,stroke-width:2px,color:#fff
     classDef external fill:#16A34A,stroke:#4ADE80,stroke-width:2px,color:#fff
 
-    subgraph User Interface
+    subgraph "User Interface"
         UI[💻 Next.js Dashboard]:::frontend
         AG[🕸️ Live Agent Graph]:::frontend
         Metrics[📊 Revenue Metrics]:::frontend
     end
 
-    subgraph Core Engine
+    subgraph "Core Engine"
         API[⚡ FastAPI Server]:::backend
         EB[📨 Event Bus]:::backend
         DB[(🗄️ SQLite Database)]:::backend
     end
 
-    subgraph AI Orchestration (LangGraph)
+    subgraph "AI Orchestration (LangGraph)"
         Router((🚦 Router)):::agents
         Strat[🧠 Strategist Agent]:::agents
         Exec[⚙️ Execution Agent]:::agents
         Mon[👀 Monitor Agent]:::agents
     end
     
-    subgraph External Services
+    subgraph "External Services"
         RP[💳 Razorpay Gateway]:::external
         Email[✉️ Resend API]:::external
     end
@@ -111,11 +111,11 @@ How does the magic happen when a payment fails? Here is the lifecycle of a recov
 ```mermaid
 sequenceDiagram
     autonumber
-    box rgba(43, 132, 234, 0.1) External
+    box rgb(43, 132, 234) "External"
     participant Razorpay
     participant Customer
     end
-    box rgba(15, 23, 42, 0.1) Razorpay Relay System
+    box rgb(15, 23, 42) "Razorpay Relay System"
     participant Webhook
     participant Router
     participant Strategist
