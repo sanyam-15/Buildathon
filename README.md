@@ -607,6 +607,117 @@ flowchart LR
 
 ---
 
+## 📸 Dashboard Screenshots
+
+Real captures from the Razorpay Relay Command Center — metrics, live agent graph, AI reasoning, orchestration logs, and recovery artifacts.
+
+<br />
+
+### 1. Dashboard Home
+
+<p align="center">
+  <img
+    src="dashboard-images/dashboard-home.png"
+    alt="Dashboard Home — metrics, trigger form, and recovery queue"
+    width="90%"
+    style="border-radius: 12px; border: 2px solid #334155; box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.45);"
+  />
+</p>
+
+<p align="center"><em>Command center home — revenue metrics, B2C/B2B trigger, and live recovery queue</em></p>
+
+<br />
+
+### 2. Live Agent Graph
+
+<p align="center">
+  <img
+    src="dashboard-images/Live%20Agent%20Graph.png"
+    alt="Live Agent Graph topology"
+    width="90%"
+    style="border-radius: 12px; border: 2px solid #2B84EA; box-shadow: 0 20px 40px -12px rgba(43, 132, 234, 0.35);"
+  />
+</p>
+
+<p align="center"><em>Full LangGraph topology — B2C specialists (blue) and B2B parent + sub-nodes (amber)</em></p>
+
+<br />
+
+### 3. Running Graph As Agent Works
+
+<p align="center">
+  <img
+    src="dashboard-images/Running%20Graph%20As%20Agent%20Works.png"
+    alt="Agent graph executing live"
+    width="90%"
+    style="border-radius: 12px; border: 2px solid #22C55E; box-shadow: 0 20px 40px -12px rgba(34, 197, 94, 0.35);"
+  />
+</p>
+
+<p align="center"><em>Live execution — nodes turn ACTIVE → COMPLETED as the recovery workflow runs</em></p>
+
+<br />
+
+### 4. AI Reasoning (Decision Panel)
+
+<p align="center">
+  <img
+    src="dashboard-images/Reasoning(AI%20made).png"
+    alt="AI Recovery Decision panel"
+    width="90%"
+    style="border-radius: 12px; border: 2px solid #8B5CF6; box-shadow: 0 20px 40px -12px rgba(139, 92, 246, 0.35);"
+  />
+</p>
+
+<p align="center"><em>Strategist output — selected action, channel, expected recovery %, and alternatives considered</em></p>
+
+<br />
+
+### 5. Orchestrator Live Logging
+
+<p align="center">
+  <img
+    src="dashboard-images/Orchestrator%20live%20logging%20each%20flow.png"
+    alt="Live orchestration console"
+    width="90%"
+    style="border-radius: 12px; border: 2px solid #F59E0B; box-shadow: 0 20px 40px -12px rgba(245, 158, 11, 0.35);"
+  />
+</p>
+
+<p align="center"><em>SSE orchestration log — every agent start/complete, finding, tool call, and policy check</em></p>
+
+<br />
+
+### 6. Mail Copy
+
+<p align="center">
+  <img
+    src="dashboard-images/Mail%20Copy.png"
+    alt="Personalized recovery email copy"
+    width="90%"
+    style="border-radius: 12px; border: 2px solid #38BDF8; box-shadow: 0 20px 40px -12px rgba(56, 189, 248, 0.35);"
+  />
+</p>
+
+<p align="center"><em>Personalized recovery / collections email generated for the case</em></p>
+
+<br />
+
+### 7. Payment Link
+
+<p align="center">
+  <img
+    src="dashboard-images/Payment%20link.png"
+    alt="Generated payment link checkout"
+    width="90%"
+    style="border-radius: 12px; border: 2px solid #22C55E; box-shadow: 0 20px 40px -12px rgba(34, 197, 94, 0.35);"
+  />
+</p>
+
+<p align="center"><em>Hosted payment link created by the Execution Agent for secure recovery</em></p>
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
