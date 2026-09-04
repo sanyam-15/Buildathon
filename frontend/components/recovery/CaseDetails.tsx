@@ -132,6 +132,25 @@ export function CaseDetails({ caseId }: { caseId: string | null }) {
           </div>
         )}
 
+        {caseData.investigation?.history_analysis?.payment_history_score != null && (
+          <div className="pt-4 border-t border-[#1E293B]">
+            <div className="text-xs text-slate-500 uppercase tracking-widest mb-2">
+              Payment History Score
+            </div>
+            <div className="text-2xl font-light text-[#F59E0B]">
+              {(caseData.investigation.history_analysis.payment_history_score * 100).toFixed(0)}%
+            </div>
+            <div className="text-[11px] text-slate-500 mt-1">
+              {caseData.investigation.history_analysis.payment_score_source || "computed_from_invoice_ledger"}
+            </div>
+            {caseData.investigation.history_analysis.payment_score_breakdown?.formula && (
+              <div className="mt-2 text-[11px] font-mono text-slate-400 leading-relaxed break-all">
+                {caseData.investigation.history_analysis.payment_score_breakdown.formula}
+              </div>
+            )}
+          </div>
+        )}
+
         <div>
           <div className="text-xs text-slate-500 uppercase tracking-widest mb-1">Amount at Risk</div>
           <div className="text-2xl font-light text-white">₹{caseData.amount_at_risk.toLocaleString()}</div>

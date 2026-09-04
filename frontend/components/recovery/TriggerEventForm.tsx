@@ -375,7 +375,7 @@ export function TriggerEventForm({ onCaseCreated }: { onCaseCreated: (id: string
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Payment History Score</Label>
+                <Label>Payment History Score (UI override — optional)</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -387,6 +387,10 @@ export function TriggerEventForm({ onCaseCreated }: { onCaseCreated: (id: string
                   }
                   className="bg-[#060B1A] border-[#1E293B] focus:border-[#F59E0B]"
                 />
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  Live score is computed from the buyer&apos;s closed-invoice AR ledger
+                  (see History Analyst tool). This field is informational only.
+                </p>
               </div>
             </div>
           </>

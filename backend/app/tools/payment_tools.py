@@ -176,3 +176,64 @@ async def get_customer_history(
     )
     
     return history
+
+
+async def get_buyer_payment_score(
+    company_name: Optional[str],
+    buyer_email: Optional[str],
+    case_id: str,
+    buyer_id: Optional[str] = None,
+) -> dict:
+    """
+    Compute B2B payment_history_score from historical invoices (demo ERP ledger).
+
+    This is the judge-facing source of truth — score is derived by formula,
+    not invented by the LLM or typed blindly into the form.
+    """
+    from app.services.payment_score import score_buyer
+
+    await event_bus.emit_simple(
+        case_id=case_id,
+        event_type="tool_started",
+        agent="b2b_history_analyst",
+        message=(
+            f"Computing payment history score from AR ledger "
+            f"({company_name or buyer_email or 'buyer'})"
+        ),
+        metadata={
+            "tool": "get_buyer_payment_score",
+            "company_name": company_name,
+            "buyer_email": buyer_email,
+        },
+    )
+
+    result = score_buyer(
+        company_name=company_name,
+        buyer_email=buyer_email,
+        buyer_id=buyer_id,
+    )
+
+    await event_bus.emit_simple(
+        case_id=case_id,
+        event_type="finding",
+        agent="b2b_history_analyst",
+        message=(
+            f"Payment history score = {result['payment_history_score']:.0%} "
+            f"from {result['invoice_count']} closed invoices "
+            f"[{result['ledger_source']}] — {result['formula']}"
+        ),
+        metadata={"tool": "get_buyer_payment_score", "result": result},
+    )
+
+    await event_bus.emit_simple(
+        case_id=case_id,
+        event_type="tool_completed",
+        agent="b2b_history_analyst",
+        message=(
+            f"Score computed: {result['payment_history_score']:.3f} "
+            f"(source: historical invoices, not UI field)"
+        ),
+        metadata={"tool": "get_buyer_payment_score", "score": result["payment_history_score"]},
+    )
+
+    return result
